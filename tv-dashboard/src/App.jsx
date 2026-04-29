@@ -3,14 +3,23 @@ import { io } from "socket.io-client";
 
 export default function App() {
   const [cars, setCars] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 🔥 CONNECT TO BACKEND RENDER
     const socket = io("https://garage-live-system-1.onrender.com");
+
+    // =========================
+    // SOCKET CONNECT
+    // =========================
+    socket.on("connect", () => {
+      console.log("Socket connecté");
+    });
 
     // INIT DATA
     socket.on("init", (data) => {
+      console.log("INIT:", data);
       setCars(data.slice().reverse());
+      setLoading(false);
     });
 
     // NEW CAR
@@ -21,26 +30,48 @@ export default function App() {
       });
     });
 
-    // UPDATE CAR STATUS
+    // UPDATE CAR
     socket.on("update-car", (updatedCar) => {
       setCars((prev) =>
         prev.map((c) => (c.id === updatedCar.id ? updatedCar : c))
       );
     });
 
+    // =========================
+    // FALLBACK (TRÈS IMPORTANT TV)
+    // =========================
+    fetch("https://garage-live-system-1.onrender.com/cars")
+      .then((res) => res.json())
+      .then((data) => {
+        setCars(data.slice().reverse());
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.log("Erreur fetch:", err);
+        setLoading(false);
+      });
+
     return () => socket.disconnect();
   }, []);
 
-  // ✔ MARK AS READY
+  // =========================
+  // MARK AS READY
+  // =========================
   const markReady = async (id) => {
-    await fetch(`https://garage-live-system-1.onrender.com/cars/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "Prêt" })
-    });
+    try {
+      await fetch(`https://garage-live-system-1.onrender.com/cars/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Prêt" })
+      });
+    } catch (err) {
+      console.log("Erreur PUT:", err);
+    }
   };
 
-  // 🎨 STATUS COLORS
+  // =========================
+  // COLORS
+  // =========================
   const getColor = (status) => {
     if (status === "Prêt") return "bg-green-500 text-white";
     if (status === "En cours" || status === "En attente")
@@ -61,10 +92,17 @@ export default function App() {
         </p>
       </header>
 
+      {/* LOADING */}
+      {loading && (
+        <p className="text-center text-gray-400">
+          Chargement des véhicules...
+        </p>
+      )}
+
       {/* LIST */}
       <main className="mx-auto mt-10 max-w-6xl space-y-6">
 
-        {cars.length === 0 && (
+        {!loading && cars.length === 0 && (
           <p className="text-center text-gray-400">
             Aucun véhicule pour le moment...
           </p>
