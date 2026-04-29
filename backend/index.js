@@ -16,9 +16,8 @@ app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "OPTIONS"],
   allowedHeaders: ["Content-Type"],
-  credentials: true
 }));
-app.options('*', cors()); // Gère les requêtes préflight
+app.options('*', cors());
 app.use(express.json());
 
 // =========================
