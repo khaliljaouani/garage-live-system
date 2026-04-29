@@ -19,7 +19,6 @@ app.use(cors({
   credentials: true
 }));
 app.options('*', cors()); // Gère les requêtes préflight
-
 app.use(express.json());
 
 // =========================
@@ -47,9 +46,10 @@ const Car = mongoose.model("Car", CarSchema);
 // =========================
 // MIDDLEWARE
 // =========================
-app.use(cors({ origin: "*" }));
-app.options('*', cors({ origin: '*' }));
-app.use(express.json());
+// app.use(cors({ origin: "*" }));
+// app.options('*', cors({ origin: '*' }));
+// app.use(express.json());
+// =========================
 
 // =========================
 // SOCKET.IO
