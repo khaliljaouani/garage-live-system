@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
+app.use(cors({ origin: "*" }));
+
 export default function App() {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
