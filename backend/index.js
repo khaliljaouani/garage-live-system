@@ -35,6 +35,7 @@ const Car = mongoose.model("Car", CarSchema);
 // MIDDLEWARE
 // =========================
 app.use(cors({ origin: "*" }));
+app.options('*', cors({ origin: '*' }));
 app.use(express.json());
 
 // =========================
