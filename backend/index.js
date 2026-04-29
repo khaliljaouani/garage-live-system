@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 
 const express = require("express");
 const http = require("http");
@@ -10,14 +10,19 @@ const app = express();
 const server = http.createServer(app);
 
 // =========================
-// MIDDLEWARE (CORS EN PREMIER !)
+// CORS CONFIG (FIX PROPRE)
 // =========================
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "OPTIONS"],
+const corsOptions = {
+  origin: [
+    "https://garage-live-system-erun-git-main-khalils-projects-164cc693.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT"],
   allowedHeaders: ["Content-Type"],
-}));
-app.options('*', cors());
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // 🔥 IMPORTANT (preflight)
+
 app.use(express.json());
 
 // =========================
@@ -43,19 +48,13 @@ const CarSchema = new mongoose.Schema({
 const Car = mongoose.model("Car", CarSchema);
 
 // =========================
-// MIDDLEWARE
-// =========================
-// app.use(cors({ origin: "*" }));
-// app.options('*', cors({ origin: '*' }));
-// app.use(express.json());
-// =========================
-
-// =========================
 // SOCKET.IO
 // =========================
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: [
+      "https://garage-live-system-erun-git-main-khalils-projects-164cc693.vercel.app"
+    ],
     methods: ["GET", "POST", "PUT"]
   }
 });
@@ -72,49 +71,56 @@ io.on("connection", async (socket) => {
 });
 
 // =========================
-// GET ALL CARS
+// ROUTES
 // =========================
+
+// GET ALL CARS
 app.get("/cars", async (req, res) => {
   const cars = await Car.find().sort({ createdAt: -1 });
   res.json(cars);
 });
 
-// =========================
 // ADD CAR
-// =========================
 app.post("/cars", async (req, res) => {
-  const exists = await Car.findOne({
-    immatriculation: req.body.immatriculation
-  });
+  try {
+    const exists = await Car.findOne({
+      immatriculation: req.body.immatriculation
+    });
 
-  if (exists) return res.json(exists);
+    if (exists) return res.json(exists);
 
-  const car = await Car.create(req.body);
+    const car = await Car.create(req.body);
 
-  io.emit("new-car", car);
+    io.emit("new-car", car);
 
-  res.json(car);
+    res.json(car);
+  } catch (err) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
-// =========================
-// UPDATE CAR STATUS
-// =========================
+// UPDATE CAR
 app.put("/cars/:id", async (req, res) => {
-  const car = await Car.findByIdAndUpdate(
-    req.params.id,
-    { status: req.body.status },
-    { new: true }
-  );
+  try {
+    const car = await Car.findByIdAndUpdate(
+      req.params.id,
+      { status: req.body.status },
+      { new: true }
+    );
 
-  io.emit("update-car", car);
+    io.emit("update-car", car);
 
-  res.json(car);
+    res.json(car);
+  } catch (err) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 // =========================
 // SERVER START
 // =========================
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Backend lancé sur le port ${PORT}`);
 });
