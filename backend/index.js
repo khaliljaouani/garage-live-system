@@ -10,6 +10,19 @@ const app = express();
 const server = http.createServer(app);
 
 // =========================
+// MIDDLEWARE (CORS EN PREMIER !)
+// =========================
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+  credentials: true
+}));
+app.options('*', cors()); // Gère les requêtes préflight
+
+app.use(express.json());
+
+// =========================
 // MONGODB CONNECTION
 // =========================
 mongoose.connect(process.env.MONGO_URI)
