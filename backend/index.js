@@ -2,16 +2,37 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
+const mongoose = require("mongoose");
 
 const app = express();
 const server = http.createServer(app);
 
 // =========================
+// MONGODB CONNECTION
+// =========================
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connecté"))
+  .catch(err => console.log(err));
+
+// =========================
+// MODEL
+// =========================
+const CarSchema = new mongoose.Schema({
+  immatriculation: String,
+  modele: String,
+  besoin: String,
+  status: {
+    type: String,
+    default: "En attente"
+  }
+}, { timestamps: true });
+
+const Car = mongoose.model("Car", CarSchema);
+
+// =========================
 // MIDDLEWARE
 // =========================
-app.use(cors({
-  origin: "*"
-}));
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 // =========================
@@ -25,46 +46,35 @@ const io = new Server(server, {
 });
 
 // =========================
-// DATA (TEMPORAIRE)
-// =========================
-let cars = [];
-
-// =========================
 // SOCKET CONNECTION
 // =========================
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log("Client connecté");
 
-  // envoyer les données au client
+  const cars = await Car.find().sort({ createdAt: -1 });
+
   socket.emit("init", cars);
 });
 
 // =========================
-// GET ALL CARS (IMPORTANT)
+// GET ALL CARS
 // =========================
-app.get("/cars", (req, res) => {
+app.get("/cars", async (req, res) => {
+  const cars = await Car.find().sort({ createdAt: -1 });
   res.json(cars);
 });
 
 // =========================
 // ADD CAR
 // =========================
-app.post("/cars", (req, res) => {
-  const exists = cars.find(
-    (c) => c.immatriculation === req.body.immatriculation
-  );
+app.post("/cars", async (req, res) => {
+  const exists = await Car.findOne({
+    immatriculation: req.body.immatriculation
+  });
 
-  if (exists) {
-    return res.json(exists);
-  }
+  if (exists) return res.json(exists);
 
-  const car = {
-    id: Date.now(),
-    ...req.body,
-    status: "En attente"
-  };
-
-  cars.push(car);
+  const car = await Car.create(req.body);
 
   io.emit("new-car", car);
 
@@ -74,14 +84,12 @@ app.post("/cars", (req, res) => {
 // =========================
 // UPDATE CAR STATUS
 // =========================
-app.put("/cars/:id", (req, res) => {
-  const car = cars.find(c => c.id == req.params.id);
-
-  if (!car) {
-    return res.status(404).json({ message: "Voiture introuvable" });
-  }
-
-  car.status = req.body.status;
+app.put("/cars/:id", async (req, res) => {
+  const car = await Car.findByIdAndUpdate(
+    req.params.id,
+    { status: req.body.status },
+    { new: true }
+  );
 
   io.emit("update-car", car);
 

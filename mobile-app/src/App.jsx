@@ -10,7 +10,7 @@ export default function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    await fetch("http://localhost:3000/cars", {
+    await fetch("https://garage-live-system-1.onrender.com/cars", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
