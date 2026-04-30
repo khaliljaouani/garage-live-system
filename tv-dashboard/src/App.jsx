@@ -118,6 +118,67 @@ export default function App() {
           </div>
         ))}
       </div>
+
+      {/* LISTE EN COLONNE CENTRÉE */}
+      <div style={{
+        flex: 1,
+        padding: "8px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px",
+        alignItems: "center"
+      }}>
+        {loading && <p style={{ textAlign: "center", color: "#94a3b8" }}>Chargement...</p>}
+
+        {!loading && cars.length === 0 && (
+          <p style={{ textAlign: "center", color: "#94a3b8" }}>Aucun véhicule...</p>
+        )}
+
+        {cars.map((car) => (
+          <div key={car._id} style={{
+            position: "relative",
+            borderRadius: "10px",
+            padding: "10px 14px",
+            background: car.status === "Prêt" ? "#22c55e" : "#fb923c",
+            boxShadow: newCarId === car._id ? "0 0 0 3px white" : "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+            width: "fit-content", // <-- largeur auto selon le contenu
+            minWidth: "320px",    // <-- largeur mini pour garder un look propre
+            maxWidth: "90vw",     // <-- évite de dépasser l'écran
+          }}>
+            {newCarId === car._id && (
+              <span style={{ position: "absolute", top: "6px", right: "6px", background: "white", color: "#ea580c", fontSize: "10px", fontWeight: "bold", padding: "2px 8px", borderRadius: "999px" }}>
+                NEW
+              </span>
+            )}
+
+            <div style={{ display: "flex", gap: "20px", flex: 1, overflow: "hidden" }}>
+              <div>
+                <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Immat.</div>
+                <div style={{ fontSize: "15px", fontWeight: "bold" }}>{car.immatriculation}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Modèle</div>
+                <div style={{ fontSize: "15px", fontWeight: "bold" }}>{car.modele}</div>
+              </div>
+              <div style={{ flex: 1, overflow: "hidden" }}>
+                <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Travail</div>
+                <div style={{ fontSize: "15px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{car.besoin}</div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => markReady(car._id)}
+              style={{ background: "white", color: car.status === "Prêt" ? "#16a34a" : "#ea580c", border: "none", borderRadius: "999px", padding: "6px 14px", fontWeight: "bold", fontSize: "13px", cursor: "pointer", flexShrink: 0 }}
+            >
+              ✔ Prêt
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
