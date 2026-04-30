@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
 // ✅ URL du backend Railway — change cette valeur quand tu as ton URL Railway
-const API_URL = import.meta.env.VITE_API_URL || "https://garage-live-system.onrender.com/";
+const API_URL = import.meta.env.VITE_API_URL || "https://garage-live-system.onrender.com";
 
 export default function App() {
   const [cars, setCars] = useState([]);
