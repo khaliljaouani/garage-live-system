@@ -10,40 +10,41 @@ const app = express();
 const server = http.createServer(app);
 
 // =========================
-// CORS CONFIG (FIX PROPRE)
+// CORS CONFIG
 // =========================
 const corsOptions = {
-  origin: [
-    "https://garage-live-system-erun-git-main-khalils-projects-164cc693.vercel.app"
-  ],
+  origin: "*", // ✅ Accepte toutes les origines (Vercel tv + mobile)
   methods: ["GET", "POST", "PUT"],
   allowedHeaders: ["Content-Type"],
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // 🔥 IMPORTANT (preflight)
-
+app.options("*", cors(corsOptions));
 app.use(express.json());
 
 // =========================
 // MONGODB CONNECTION
 // =========================
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connecté"))
-  .catch(err => console.log(err));
+  .catch((err) => console.log(err));
 
 // =========================
 // MODEL
 // =========================
-const CarSchema = new mongoose.Schema({
-  immatriculation: String,
-  modele: String,
-  besoin: String,
-  status: {
-    type: String,
-    default: "En attente"
-  }
-}, { timestamps: true });
+const CarSchema = new mongoose.Schema(
+  {
+    immatriculation: String,
+    modele: String,
+    besoin: String,
+    status: {
+      type: String,
+      default: "En attente",
+    },
+  },
+  { timestamps: true }
+);
 
 const Car = mongoose.model("Car", CarSchema);
 
@@ -52,11 +53,9 @@ const Car = mongoose.model("Car", CarSchema);
 // =========================
 const io = new Server(server, {
   cors: {
-    origin: [
-      "https://garage-live-system-erun-git-main-khalils-projects-164cc693.vercel.app"
-    ],
-    methods: ["GET", "POST", "PUT"]
-  }
+    origin: "*", // ✅ Accepte toutes les origines
+    methods: ["GET", "POST", "PUT"],
+  },
 });
 
 // =========================
@@ -64,9 +63,7 @@ const io = new Server(server, {
 // =========================
 io.on("connection", async (socket) => {
   console.log("Client connecté");
-
   const cars = await Car.find().sort({ createdAt: -1 });
-
   socket.emit("init", cars);
 });
 
@@ -84,22 +81,20 @@ app.get("/cars", async (req, res) => {
 app.post("/cars", async (req, res) => {
   try {
     const exists = await Car.findOne({
-      immatriculation: req.body.immatriculation
+      immatriculation: req.body.immatriculation,
     });
 
     if (exists) return res.json(exists);
 
     const car = await Car.create(req.body);
-
     io.emit("new-car", car);
-
     res.json(car);
   } catch (err) {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
-// UPDATE CAR
+// UPDATE CAR STATUS
 app.put("/cars/:id", async (req, res) => {
   try {
     const car = await Car.findByIdAndUpdate(
@@ -107,9 +102,7 @@ app.put("/cars/:id", async (req, res) => {
       { status: req.body.status },
       { new: true }
     );
-
     io.emit("update-car", car);
-
     res.json(car);
   } catch (err) {
     res.status(500).json({ error: "Erreur serveur" });

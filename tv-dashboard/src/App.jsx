@@ -1,48 +1,47 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-app.use(cors({ origin: "*" }));
+// ✅ URL du backend Railway — change cette valeur quand tu as ton URL Railway
+const API_URL = import.meta.env.VITE_API_URL || "https://garage-live-system-1.onrender.com";
 
 export default function App() {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const socket = io("https://garage-live-system-1.onrender.com");
+    // ✅ Connexion Socket.IO
+    const socket = io(API_URL);
 
-    // =========================
-    // SOCKET CONNECT
-    // =========================
     socket.on("connect", () => {
       console.log("Socket connecté");
     });
 
-    // INIT DATA
+    // INIT : données au démarrage
     socket.on("init", (data) => {
       console.log("INIT:", data);
       setCars(data.slice().reverse());
       setLoading(false);
     });
 
-    // NEW CAR
+    // NOUVELLE VOITURE ajoutée
     socket.on("new-car", (car) => {
       setCars((prev) => {
-        if (prev.some((c) => c.id === car.id)) return prev;
+        // ✅ FIX : utilise _id (MongoDB) et pas id
+        if (prev.some((c) => c._id === car._id)) return prev;
         return [car, ...prev];
       });
     });
 
-    // UPDATE CAR
+    // VOITURE MISE À JOUR (statut changé)
     socket.on("update-car", (updatedCar) => {
+      // ✅ FIX : utilise _id (MongoDB) et pas id
       setCars((prev) =>
-        prev.map((c) => (c.id === updatedCar.id ? updatedCar : c))
+        prev.map((c) => (c._id === updatedCar._id ? updatedCar : c))
       );
     });
 
-    // =========================
-    // FALLBACK (TRÈS IMPORTANT TV)
-    // =========================
-    fetch("https://garage-live-system-1.onrender.com/cars")
+    // FALLBACK fetch si socket lent
+    fetch(`${API_URL}/cars`)
       .then((res) => res.json())
       .then((data) => {
         setCars(data.slice().reverse());
@@ -57,14 +56,14 @@ export default function App() {
   }, []);
 
   // =========================
-  // MARK AS READY
+  // MARQUER COMME PRÊT
   // =========================
   const markReady = async (id) => {
     try {
-      await fetch(`https://garage-live-system-1.onrender.com/cars/${id}`, {
+      await fetch(`${API_URL}/cars/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "Prêt" })
+        body: JSON.stringify({ status: "Prêt" }),
       });
     } catch (err) {
       console.log("Erreur PUT:", err);
@@ -72,7 +71,7 @@ export default function App() {
   };
 
   // =========================
-  // COLORS
+  // COULEURS PAR STATUT
   // =========================
   const getColor = (status) => {
     if (status === "Prêt") return "bg-green-500 text-white";
@@ -96,49 +95,49 @@ export default function App() {
 
       {/* LOADING */}
       {loading && (
-        <p className="text-center text-gray-400">
+        <p className="text-center text-gray-400 text-xl">
           Chargement des véhicules...
         </p>
       )}
 
-      {/* LIST */}
+      {/* LISTE DES VOITURES */}
       <main className="mx-auto mt-10 max-w-6xl space-y-6">
 
         {!loading && cars.length === 0 && (
-          <p className="text-center text-gray-400">
+          <p className="text-center text-gray-400 text-xl">
             Aucun véhicule pour le moment...
           </p>
         )}
 
+        {/* ✅ FIX : key={car._id} au lieu de car.id */}
         {cars.map((car) => (
           <div
-            key={car.id}
+            key={car._id}
             className={`w-full rounded-2xl p-6 shadow-lg transition hover:scale-[1.01] ${getColor(car.status)}`}
           >
             <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
 
-              {/* INFOS */}
+              {/* INFOS VOITURE */}
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <p className="text-xs uppercase opacity-70">Immatriculation</p>
                   <p className="text-xl font-bold">{car.immatriculation}</p>
                 </div>
-
                 <div>
                   <p className="text-xs uppercase opacity-70">Modèle</p>
                   <p className="text-xl font-bold">{car.modele}</p>
                 </div>
-
                 <div>
                   <p className="text-xs uppercase opacity-70">Travail</p>
                   <p className="text-xl font-bold">{car.besoin}</p>
                 </div>
               </div>
 
-              {/* BUTTON */}
+              {/* BOUTON PRÊT */}
+              {/* ✅ FIX : markReady(car._id) au lieu de car.id */}
               <div>
                 <button
-                  onClick={() => markReady(car.id)}
+                  onClick={() => markReady(car._id)}
                   className={`px-6 py-3 rounded-full font-bold transition hover:scale-105 ${
                     car.status === "Prêt"
                       ? "bg-white text-green-600"
