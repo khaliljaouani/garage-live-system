@@ -131,7 +131,17 @@ export default function App() {
               </div>
               <div style={{ flex: 1, overflow: "hidden" }}>
                 <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Travail</div>
-                <div style={{ fontSize: "15px", fontWeight: "bold", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{car.besoin}</div>
+                <div style={{
+                  fontSize: "15px",
+                  fontWeight: "bold",
+                  whiteSpace: "normal",
+                  wordBreak: "break-word",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis"
+                }}>{car.besoin}</div>
+
+
+
               </div>
             </div>
 
