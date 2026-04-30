@@ -1,46 +1,84 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-// ✅ URL du backend Railway — change cette valeur quand tu as ton URL Railway
 const API_URL = import.meta.env.VITE_API_URL || "https://garage-live-system.onrender.com";
+
+// =========================
+// SON MÉCANIQUE — Web Audio API
+// Pas besoin de fichier audio, généré en code pur
+// =========================
+const playGarageSound = () => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    const playTone = (freq, startTime, duration, type = "sawtooth", gain = 0.3) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + startTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.5, ctx.currentTime + startTime + duration);
+      gainNode.gain.setValueAtTime(gain, ctx.currentTime + startTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + duration);
+      osc.start(ctx.currentTime + startTime);
+      osc.stop(ctx.currentTime + startTime + duration);
+    };
+
+    // Impact mécanique : clé à molette + résonance métal
+    playTone(120, 0.00, 0.15, "sawtooth", 0.4);
+    playTone(80,  0.10, 0.20, "square",   0.3);
+    playTone(200, 0.20, 0.10, "sawtooth", 0.25);
+    playTone(60,  0.25, 0.30, "sawtooth", 0.2);
+    playTone(300, 0.30, 0.08, "square",   0.15);
+    playTone(150, 0.35, 0.20, "sawtooth", 0.1);
+
+  } catch (e) {
+    console.log("Audio non supporté:", e);
+  }
+};
 
 export default function App() {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [newCarId, setNewCarId] = useState(null); // pour l'animation flash
 
   useEffect(() => {
-    // ✅ Connexion Socket.IO
     const socket = io(API_URL);
 
     socket.on("connect", () => {
       console.log("Socket connecté");
     });
 
-    // INIT : données au démarrage
+    // INIT : données au démarrage (pas de son)
     socket.on("init", (data) => {
-      console.log("INIT:", data);
       setCars(data.slice().reverse());
       setLoading(false);
     });
 
-    // NOUVELLE VOITURE ajoutée
+    // NOUVELLE VOITURE → son + flash
     socket.on("new-car", (car) => {
       setCars((prev) => {
-        // ✅ FIX : utilise _id (MongoDB) et pas id
         if (prev.some((c) => c._id === car._id)) return prev;
         return [car, ...prev];
       });
+
+      // 🔊 Joue le son mécanique
+      playGarageSound();
+
+      // 💡 Flash visuel sur la carte pendant 2s
+      setNewCarId(car._id);
+      setTimeout(() => setNewCarId(null), 2000);
     });
 
-    // VOITURE MISE À JOUR (statut changé)
+    // VOITURE MISE À JOUR
     socket.on("update-car", (updatedCar) => {
-      // ✅ FIX : utilise _id (MongoDB) et pas id
       setCars((prev) =>
         prev.map((c) => (c._id === updatedCar._id ? updatedCar : c))
       );
     });
 
-    // FALLBACK fetch si socket lent
+    // FALLBACK fetch
     fetch(`${API_URL}/cars`)
       .then((res) => res.json())
       .then((data) => {
@@ -109,12 +147,21 @@ export default function App() {
           </p>
         )}
 
-        {/* ✅ FIX : key={car._id} au lieu de car.id */}
         {cars.map((car) => (
           <div
             key={car._id}
-            className={`w-full rounded-2xl p-6 shadow-lg transition hover:scale-[1.01] ${getColor(car.status)}`}
+            className={`relative w-full rounded-2xl p-6 shadow-lg transition-all duration-300 hover:scale-[1.01]
+              ${getColor(car.status)}
+              ${newCarId === car._id ? "ring-4 ring-white scale-[1.02] brightness-125" : ""}
+            `}
           >
+            {/* BADGE NOUVEAU */}
+            {newCarId === car._id && (
+              <span className="absolute top-3 right-4 bg-white text-orange-600 text-xs font-bold px-3 py-1 rounded-full animate-pulse">
+                🚗 NOUVEAU
+              </span>
+            )}
+
             <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
 
               {/* INFOS VOITURE */}
@@ -134,7 +181,6 @@ export default function App() {
               </div>
 
               {/* BOUTON PRÊT */}
-              {/* ✅ FIX : markReady(car._id) au lieu de car.id */}
               <div>
                 <button
                   onClick={() => markReady(car._id)}
