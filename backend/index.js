@@ -45,7 +45,7 @@ const Car = mongoose.model("Car", CarSchema);
 // SOCKET.IO
 const io = new Server(server, {
   cors: { origin: "*" },
-  transports: ["websocket"],
+  transports: ["polling", "websocket"],
 });
 
 // SOCKET CONNECTION

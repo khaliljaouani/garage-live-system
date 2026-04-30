@@ -31,7 +31,9 @@ export default function App() {
   const [newCarId, setNewCarId] = useState(null);
 
   useEffect(() => {
-    const socket = io(API_URL);
+    const socket = io(API_URL, {
+  transports: ["polling", "websocket"],
+});
 
     socket.on("connect", () => console.log("✅ connecté"));
 
