@@ -153,6 +153,7 @@ app.put("/cars/:id", async (req, res) => {
       return res.status(404).json({ error: "Voiture non trouvée" });
     }
 
+    // Après avoir modifié la voiture
     io.emit("update-car", car);
 
     res.json(car);
