@@ -15,9 +15,6 @@ const initAudio = () => {
 
 document.addEventListener("click", initAudio);
 
-// =========================
-// BIP SIMPLE
-// =========================
 const playBip = () => {
   if (!audioCtx || audioCtx.state !== "running") return;
 
@@ -27,7 +24,7 @@ const playBip = () => {
   gain.connect(audioCtx.destination);
 
   osc.type = "sine";
-  osc.frequency.value = 880; // fréquence du bip (880 Hz = bip net et clair)
+  osc.frequency.value = 880;
   gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
 
@@ -55,9 +52,7 @@ export default function App() {
         if (prev.some((c) => c._id === car._id)) return prev;
         return [car, ...prev];
       });
-
       playBip();
-
       setNewCarId(car._id);
       setTimeout(() => setNewCarId(null), 2000);
     });
