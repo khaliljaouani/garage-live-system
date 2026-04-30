@@ -1,94 +1,96 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://garage-live-system.onrender.com";
 
-// =========================
-// SON MÉCANIQUE — Web Audio API
-// Pas besoin de fichier audio, généré en code pur
-// =========================
+// AudioContext global — créé uniquement après le clic utilisateur
+let audioCtx = null;
+
 const playGarageSound = () => {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (!audioCtx) return;
 
-    const playTone = (freq, startTime, duration, type = "sawtooth", gain = 0.3) => {
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      osc.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + startTime);
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.5, ctx.currentTime + startTime + duration);
-      gainNode.gain.setValueAtTime(gain, ctx.currentTime + startTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + duration);
-      osc.start(ctx.currentTime + startTime);
-      osc.stop(ctx.currentTime + startTime + duration);
-    };
+  const playTone = (freq, startTime, duration, type, gain) => {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startTime);
+    osc.frequency.exponentialRampToValueAtTime(
+      Math.max(freq * 0.4, 20),
+      audioCtx.currentTime + startTime + duration
+    );
+    g.gain.setValueAtTime(gain, audioCtx.currentTime + startTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startTime + duration);
+    osc.start(audioCtx.currentTime + startTime);
+    osc.stop(audioCtx.currentTime + startTime + duration + 0.01);
+  };
 
-    // Impact mécanique : clé à molette + résonance métal
-    playTone(120, 0.00, 0.15, "sawtooth", 0.4);
-    playTone(80,  0.10, 0.20, "square",   0.3);
-    playTone(200, 0.20, 0.10, "sawtooth", 0.25);
-    playTone(60,  0.25, 0.30, "sawtooth", 0.2);
-    playTone(300, 0.30, 0.08, "square",   0.15);
-    playTone(150, 0.35, 0.20, "sawtooth", 0.1);
-
-  } catch (e) {
-    console.log("Audio non supporté:", e);
-  }
+  playTone(120, 0.00, 0.15, "sawtooth", 0.5);
+  playTone(80,  0.10, 0.20, "square",   0.4);
+  playTone(200, 0.20, 0.10, "sawtooth", 0.3);
+  playTone(60,  0.25, 0.30, "sawtooth", 0.25);
+  playTone(300, 0.30, 0.08, "square",   0.2);
+  playTone(150, 0.35, 0.20, "sawtooth", 0.15);
 };
 
 export default function App() {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newCarId, setNewCarId] = useState(null); // pour l'animation flash
+  const [newCarId, setNewCarId] = useState(null);
+  const [audioReady, setAudioReady] = useState(false);
 
+  // =========================
+  // ACTIVER SON AU CLIC
+  // =========================
+  const activateAudio = () => {
+    // Crée le contexte au moment exact du clic — navigateur l'autorise
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    setAudioReady(true);
+    // Son de test immédiat
+    playGarageSound();
+  };
+
+  // =========================
+  // SOCKET + FETCH
+  // =========================
   useEffect(() => {
     const socket = io(API_URL);
 
-    socket.on("connect", () => {
-      console.log("Socket connecté");
-    });
+    socket.on("connect", () => console.log("✅ Socket connecté"));
 
-    // INIT : données au démarrage (pas de son)
     socket.on("init", (data) => {
       setCars(data.slice().reverse());
       setLoading(false);
     });
 
-    // NOUVELLE VOITURE → son + flash
     socket.on("new-car", (car) => {
       setCars((prev) => {
         if (prev.some((c) => c._id === car._id)) return prev;
         return [car, ...prev];
       });
 
-      // 🔊 Joue le son mécanique
+      // 🔊 Son mécanique
       playGarageSound();
 
-      // 💡 Flash visuel sur la carte pendant 2s
+      // 💡 Flash visuel 2s
       setNewCarId(car._id);
       setTimeout(() => setNewCarId(null), 2000);
     });
 
-    // VOITURE MISE À JOUR
     socket.on("update-car", (updatedCar) => {
       setCars((prev) =>
         prev.map((c) => (c._id === updatedCar._id ? updatedCar : c))
       );
     });
 
-    // FALLBACK fetch
     fetch(`${API_URL}/cars`)
       .then((res) => res.json())
       .then((data) => {
         setCars(data.slice().reverse());
         setLoading(false);
       })
-      .catch((err) => {
-        console.log("Erreur fetch:", err);
-        setLoading(false);
-      });
+      .catch((err) => console.log("Erreur fetch:", err));
 
     return () => socket.disconnect();
   }, []);
@@ -109,12 +111,11 @@ export default function App() {
   };
 
   // =========================
-  // COULEURS PAR STATUT
+  // COULEURS
   // =========================
   const getColor = (status) => {
     if (status === "Prêt") return "bg-green-500 text-white";
-    if (status === "En cours" || status === "En attente")
-      return "bg-orange-400 text-white";
+    if (status === "En cours" || status === "En attente") return "bg-orange-400 text-white";
     return "bg-gray-200 text-gray-900";
   };
 
@@ -122,24 +123,36 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 text-white p-6 lg:p-10">
 
       {/* HEADER */}
-      <header className="mx-auto max-w-6xl rounded-2xl px-6 py-8 mb-8">
-        <h1 className="text-4xl font-bold text-center">
-          <span className="text-green-500">CLINICAR 77</span>
-        </h1>
-        <p className="mt-3 text-center text-gray-400">
-          Dashboard temps réel des véhicules
-        </p>
+      <header className="mx-auto max-w-6xl px-6 py-8 mb-4 flex items-center justify-between">
+        <div className="flex-1 text-center">
+          <h1 className="text-4xl font-bold">
+            <span className="text-green-500">CLINICAR 77</span>
+          </h1>
+          <p className="mt-3 text-gray-400">Dashboard temps réel des véhicules</p>
+        </div>
+
+        {/* BOUTON SON */}
+        <button
+          onClick={activateAudio}
+          className={`ml-6 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
+            audioReady
+              ? "bg-green-600 text-white"
+              : "bg-yellow-400 text-black animate-pulse hover:bg-yellow-300"
+          }`}
+        >
+          {audioReady ? "🔊 Son activé" : "🔇 Activer le son"}
+        </button>
       </header>
 
       {/* LOADING */}
       {loading && (
-        <p className="text-center text-gray-400 text-xl">
+        <p className="text-center text-gray-400 text-xl mt-10">
           Chargement des véhicules...
         </p>
       )}
 
-      {/* LISTE DES VOITURES */}
-      <main className="mx-auto mt-10 max-w-6xl space-y-6">
+      {/* LISTE */}
+      <main className="mx-auto mt-6 max-w-6xl space-y-6">
 
         {!loading && cars.length === 0 && (
           <p className="text-center text-gray-400 text-xl">
@@ -164,7 +177,6 @@ export default function App() {
 
             <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
 
-              {/* INFOS VOITURE */}
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <p className="text-xs uppercase opacity-70">Immatriculation</p>
@@ -180,7 +192,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* BOUTON PRÊT */}
               <div>
                 <button
                   onClick={() => markReady(car._id)}
