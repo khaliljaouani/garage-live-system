@@ -33,7 +33,7 @@ export default function App() {
   useEffect(() => {
     const socket = io(API_URL);
     socket.on("connect", () => console.log("✅ connecté"));
-    socket.on("init", (data) => { setCars(data.slice().reverse()); setLoading(false); });
+    socket.on("init", (data) => { setCars(data); setLoading(false); });
     socket.on("new-car", (car) => {
       setCars((prev) => prev.some((c) => c._id === car._id) ? prev : [car, ...prev]);
       playBip();
@@ -43,7 +43,7 @@ export default function App() {
     socket.on("update-car", (updatedCar) => {
       setCars((prev) => prev.map((c) => c._id === updatedCar._id ? updatedCar : c));
     });
-    fetch(`${API_URL}/cars`).then(r => r.json()).then(data => { setCars(data.slice().reverse()); setLoading(false); }).catch(console.log);
+    fetch(`${API_URL}/cars`).then(r => r.json()).then(data => { setCars(data); setLoading(false); }).catch(console.log);
     return () => socket.disconnect();
   }, []);
 
