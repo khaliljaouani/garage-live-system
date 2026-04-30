@@ -100,16 +100,7 @@ export default function App() {
             <div>
               <div><b>{car.immatriculation}</b></div>
               <div>{car.modele}</div>
-              <div
-  style={{
-    flex: 1,
-    padding: "8px",
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-    gap: "10px",
-    alignContent: "start"
-  }}
->{car.besoin}</div>
+              <div>{car.besoin}</div>
             </div>
 
             <button
