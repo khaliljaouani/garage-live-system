@@ -12,14 +12,7 @@ const server = http.createServer(app);
 // =========================
 // CORS CONFIG
 // =========================
-const corsOptions = {
-  origin: "*", // ✅ Accepte toutes les origines (Vercel tv + mobile)
-  methods: ["GET", "POST", "PUT"],
-  allowedHeaders: ["Content-Type"],
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.use(cors({ origin: "*" })); // ✅ Accepte tout, sans wildcard options()
 app.use(express.json());
 
 // =========================
@@ -70,6 +63,11 @@ io.on("connection", async (socket) => {
 // =========================
 // ROUTES
 // =========================
+
+// TEST
+app.get("/", (req, res) => {
+  res.json({ message: "Backend garage OK ✅" });
+});
 
 // GET ALL CARS
 app.get("/cars", async (req, res) => {
