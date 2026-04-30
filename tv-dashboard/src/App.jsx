@@ -33,7 +33,10 @@ export default function App() {
   useEffect(() => {
     const socket = io(API_URL);
     socket.on("connect", () => console.log("✅ connecté"));
-    socket.on("init", (data) => { setCars(data.slice().reverse()); setLoading(false); });
+    socket.on("init", (data) => {
+      setCars(data.slice().reverse()); // Les plus récentes en haut
+      setLoading(false);
+    });
     socket.on("new-car", (car) => {
       setCars((prev) => prev.some((c) => c._id === car._id) ? prev : [car, ...prev]);
       playBip();
@@ -43,23 +46,27 @@ export default function App() {
     socket.on("update-car", (updatedCar) => {
       setCars((prev) => prev.map((c) => c._id === updatedCar._id ? updatedCar : c));
     });
-    fetch(`${API_URL}/cars`).then(r => r.json()).then(data => { setCars(data.slice().reverse()); setLoading(false); }).catch(console.log);
+    fetch(`${API_URL}/cars`)
+      .then(r => r.json())
+      .then(data => {
+        setCars(data.slice().reverse());
+        setLoading(false);
+      })
+      .catch(console.log);
     return () => socket.disconnect();
   }, []);
 
   const markReady = async (id) => {
-    await fetch(`${API_URL}/cars/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "Prêt" }) });
-  };
-
-  const getColor = (status) => {
-    if (status === "Prêt") return "bg-green-500 text-white";
-    if (status === "En attente" || status === "En cours") return "bg-orange-400 text-white";
-    return "bg-gray-200 text-gray-900";
+    await fetch(`${API_URL}/cars/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "Prêt" })
+    });
+    // Pas besoin de rafraîchir, le socket "update-car" mettra à jour l'affichage
   };
 
   return (
     <div style={{ background: "#0f172a", minHeight: "100vh", color: "white", display: "flex", flexDirection: "column" }}>
-
       {/* HEADER MINI */}
       <div style={{ padding: "8px 16px", borderBottom: "1px solid #1e293b", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ color: "#22c55e", fontWeight: "bold", fontSize: "18px" }}>CLINICAR 77</span>
@@ -67,14 +74,18 @@ export default function App() {
       </div>
 
       {/* GRILLE 2 COLONNES */}
-      <div style={{ flex: 1, padding: "8px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", alignContent: "start" }}>
-
+      <div style={{
+        flex: 1,
+        padding: "8px",
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "8px",
+        alignContent: "start"
+      }}>
         {loading && <p style={{ gridColumn: "span 2", textAlign: "center", color: "#94a3b8" }}>Chargement...</p>}
-
         {!loading && cars.length === 0 && (
           <p style={{ gridColumn: "span 2", textAlign: "center", color: "#94a3b8" }}>Aucun véhicule...</p>
         )}
-
         {cars.map((car) => (
           <div key={car._id} style={{
             position: "relative",
@@ -87,13 +98,21 @@ export default function App() {
             justifyContent: "space-between",
             gap: "8px"
           }}>
-
             {newCarId === car._id && (
-              <span style={{ position: "absolute", top: "6px", right: "6px", background: "white", color: "#ea580c", fontSize: "10px", fontWeight: "bold", padding: "2px 8px", borderRadius: "999px" }}>
+              <span style={{
+                position: "absolute",
+                top: "6px",
+                right: "6px",
+                background: "white",
+                color: "#ea580c",
+                fontSize: "10px",
+                fontWeight: "bold",
+                padding: "2px 8px",
+                borderRadius: "999px"
+              }}>
                 NEW
               </span>
             )}
-
             <div style={{ display: "flex", gap: "20px", flex: 1, overflow: "hidden" }}>
               <div>
                 <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Immat.</div>
@@ -115,10 +134,19 @@ export default function App() {
                 }}>{car.besoin}</div>
               </div>
             </div>
-
             <button
               onClick={() => markReady(car._id)}
-              style={{ background: "white", color: car.status === "Prêt" ? "#16a34a" : "#ea580c", border: "none", borderRadius: "999px", padding: "6px 14px", fontWeight: "bold", fontSize: "13px", cursor: "pointer", flexShrink: 0 }}
+              style={{
+                background: "white",
+                color: car.status === "Prêt" ? "#16a34a" : "#ea580c",
+                border: "none",
+                borderRadius: "999px",
+                padding: "6px 14px",
+                fontWeight: "bold",
+                fontSize: "13px",
+                cursor: "pointer",
+                flexShrink: 0
+              }}
             >
               ✔ Prêt
             </button>
