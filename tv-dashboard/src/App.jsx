@@ -105,7 +105,14 @@ export default function App() {
               </div>
               <div style={{ flex: 1, overflow: "hidden" }}>
                 <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Travail</div>
-                <div style={{ fontSize: "15px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{car.besoin}</div>
+                <div style={{
+                  fontSize: "15px",
+                  fontWeight: "bold",
+                  whiteSpace: "normal",
+                  wordBreak: "break-word",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis"
+                }}>{car.besoin}</div>
               </div>
             </div>
 
@@ -166,7 +173,14 @@ export default function App() {
               </div>
               <div style={{ flex: 1, overflow: "hidden" }}>
                 <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Travail</div>
-                <div style={{ fontSize: "15px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{car.besoin}</div>
+                <div style={{
+                  fontSize: "15px",
+                  fontWeight: "bold",
+                  whiteSpace: "normal",
+                  wordBreak: "break-word",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis"
+                }}>{car.besoin}</div>
               </div>
             </div>
 
@@ -205,13 +219,12 @@ export default function App() {
               alignItems: "center",
               justifyContent: "space-between",
               gap: "12px",
-              width: "100%",           // 
-              height: "auto",          // 
-              minHeight: "60px",       // 
+              width: "420px",           // largeur fixe
+              minHeight: "60px",       // hauteur minimale
               fontSize: "16px",
+              overflow: "hidden",       // évite le débordement
             }}
           >
-            {/* ... contenu de la carte ... */}
             <div style={{ display: "flex", gap: "20px", flex: 1, overflow: "hidden" }}>
               <div>
                 <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Immat.</div>
@@ -223,7 +236,14 @@ export default function App() {
               </div>
               <div style={{ flex: 1, overflow: "hidden" }}>
                 <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Travail</div>
-                <div style={{ fontSize: "15px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{car.besoin}</div>
+                <div style={{
+                  fontSize: "15px",
+                  fontWeight: "bold",
+                  whiteSpace: "normal",
+                  wordBreak: "break-word",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis"
+                }}>{car.besoin}</div>
               </div>
             </div>
             <button
