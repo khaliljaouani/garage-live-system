@@ -4,15 +4,11 @@ import { io } from "socket.io-client";
 const API_URL = import.meta.env.VITE_API_URL || "https://garage-live-system.onrender.com";
 
 let audioCtx = null;
-
 const initAudio = () => {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === "suspended") audioCtx.resume();
   document.removeEventListener("click", initAudio);
 };
-
 document.addEventListener("click", initAudio);
 
 const playBip = () => {
@@ -36,115 +32,92 @@ export default function App() {
 
   useEffect(() => {
     const socket = io(API_URL);
-    socket.on("connect", () => console.log("✅ Socket connecté"));
+    socket.on("connect", () => console.log("✅ connecté"));
     socket.on("init", (data) => { setCars(data.slice().reverse()); setLoading(false); });
     socket.on("new-car", (car) => {
-      setCars((prev) => {
-        if (prev.some((c) => c._id === car._id)) return prev;
-        return [car, ...prev];
-      });
+      setCars((prev) => prev.some((c) => c._id === car._id) ? prev : [car, ...prev]);
       playBip();
       setNewCarId(car._id);
       setTimeout(() => setNewCarId(null), 2000);
     });
     socket.on("update-car", (updatedCar) => {
-      setCars((prev) => prev.map((c) => (c._id === updatedCar._id ? updatedCar : c)));
+      setCars((prev) => prev.map((c) => c._id === updatedCar._id ? updatedCar : c));
     });
-    fetch(`${API_URL}/cars`)
-      .then((res) => res.json())
-      .then((data) => { setCars(data.slice().reverse()); setLoading(false); })
-      .catch((err) => console.log("Erreur fetch:", err));
+    fetch(`${API_URL}/cars`).then(r => r.json()).then(data => { setCars(data.slice().reverse()); setLoading(false); }).catch(console.log);
     return () => socket.disconnect();
   }, []);
 
   const markReady = async (id) => {
-    try {
-      await fetch(`${API_URL}/cars/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "Prêt" }),
-      });
-    } catch (err) { console.log("Erreur PUT:", err); }
+    await fetch(`${API_URL}/cars/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "Prêt" }) });
   };
 
   const getColor = (status) => {
     if (status === "Prêt") return "bg-green-500 text-white";
-    if (status === "En cours" || status === "En attente") return "bg-orange-400 text-white";
+    if (status === "En attente" || status === "En cours") return "bg-orange-400 text-white";
     return "bg-gray-200 text-gray-900";
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col">
+    <div style={{ background: "#0f172a", minHeight: "100vh", color: "white", display: "flex", flexDirection: "column" }}>
 
-      {/* HEADER COMPACT */}
-      <header className="px-4 py-2 flex items-center justify-between border-b border-slate-800">
-        <h1 className="text-xl font-bold">
-          <span className="text-green-500">CLINICAR 77</span>
-        </h1>
-        <span className="text-slate-400 text-xs">
-          {cars.length} véhicule{cars.length !== 1 ? "s" : ""} en cours
-        </span>
-      </header>
+      {/* HEADER MINI */}
+      <div style={{ padding: "8px 16px", borderBottom: "1px solid #1e293b", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ color: "#22c55e", fontWeight: "bold", fontSize: "18px" }}>CLINICAR 77</span>
+        <span style={{ color: "#94a3b8", fontSize: "12px" }}>{cars.length} véhicule{cars.length !== 1 ? "s" : ""}</span>
+      </div>
 
-      {loading && (
-        <p className="text-center text-gray-400 text-sm mt-6">Chargement...</p>
-      )}
+      {/* GRILLE 2 COLONNES */}
+      <div style={{ flex: 1, padding: "8px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", alignContent: "start" }}>
 
-      {/* GRILLE 2 COLONNES — cartes petites, beaucoup tiennent à l'écran */}
-      <main className="flex-1 p-2 grid grid-cols-2 gap-2 content-start">
+        {loading && <p style={{ gridColumn: "span 2", textAlign: "center", color: "#94a3b8" }}>Chargement...</p>}
 
         {!loading && cars.length === 0 && (
-          <p className="col-span-2 text-center text-gray-400 text-sm mt-6">
-            Aucun véhicule pour le moment...
-          </p>
+          <p style={{ gridColumn: "span 2", textAlign: "center", color: "#94a3b8" }}>Aucun véhicule...</p>
         )}
 
         {cars.map((car) => (
-          <div
-            key={car._id}
-            className={`relative rounded-lg px-3 py-2 shadow transition-all duration-300
-              ${getColor(car.status)}
-              ${newCarId === car._id ? "ring-2 ring-white brightness-125" : ""}
-            `}
-          >
-            {/* BADGE NOUVEAU */}
+          <div key={car._id} style={{
+            position: "relative",
+            borderRadius: "10px",
+            padding: "10px 14px",
+            background: car.status === "Prêt" ? "#22c55e" : "#fb923c",
+            boxShadow: newCarId === car._id ? "0 0 0 3px white" : "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px"
+          }}>
+
             {newCarId === car._id && (
-              <span className="absolute top-1.5 right-2 bg-white text-orange-600 text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+              <span style={{ position: "absolute", top: "6px", right: "6px", background: "white", color: "#ea580c", fontSize: "10px", fontWeight: "bold", padding: "2px 8px", borderRadius: "999px" }}>
                 NEW
               </span>
             )}
 
-            {/* LIGNE PRINCIPALE */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex gap-3 flex-1 min-w-0">
-                <div className="min-w-0">
-                  <p className="text-xs opacity-60 uppercase leading-none">Immat.</p>
-                  <p className="text-sm font-bold truncate">{car.immatriculation}</p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs opacity-60 uppercase leading-none">Modèle</p>
-                  <p className="text-sm font-bold truncate">{car.modele}</p>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs opacity-60 uppercase leading-none">Travail</p>
-                  <p className="text-sm font-bold truncate">{car.besoin}</p>
-                </div>
+            <div style={{ display: "flex", gap: "20px", flex: 1, overflow: "hidden" }}>
+              <div>
+                <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Immat.</div>
+                <div style={{ fontSize: "15px", fontWeight: "bold" }}>{car.immatriculation}</div>
               </div>
-
-              <button
-                onClick={() => markReady(car._id)}
-                className={`shrink-0 px-2 py-1 rounded-full text-xs font-bold transition hover:scale-105 ${
-                  car.status === "Prêt" ? "bg-white text-green-600" : "bg-white text-orange-600"
-                }`}
-              >
-                ✔ Prêt
-              </button>
+              <div>
+                <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Modèle</div>
+                <div style={{ fontSize: "15px", fontWeight: "bold" }}>{car.modele}</div>
+              </div>
+              <div style={{ flex: 1, overflow: "hidden" }}>
+                <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Travail</div>
+                <div style={{ fontSize: "15px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{car.besoin}</div>
+              </div>
             </div>
 
-            <p className="text-xs opacity-60 mt-1">{car.status}</p>
+            <button
+              onClick={() => markReady(car._id)}
+              style={{ background: "white", color: car.status === "Prêt" ? "#16a34a" : "#ea580c", border: "none", borderRadius: "999px", padding: "6px 14px", fontWeight: "bold", fontSize: "13px", cursor: "pointer", flexShrink: 0 }}
+            >
+              ✔ Prêt
+            </button>
           </div>
         ))}
-      </main>
+      </div>
     </div>
   );
 }
