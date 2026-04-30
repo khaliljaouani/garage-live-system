@@ -17,17 +17,14 @@ document.addEventListener("click", initAudio);
 
 const playBip = () => {
   if (!audioCtx || audioCtx.state !== "running") return;
-
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.connect(gain);
   gain.connect(audioCtx.destination);
-
   osc.type = "sine";
   osc.frequency.value = 880;
   gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-
   osc.start(audioCtx.currentTime);
   osc.stop(audioCtx.currentTime + 0.3);
 };
@@ -39,14 +36,8 @@ export default function App() {
 
   useEffect(() => {
     const socket = io(API_URL);
-
     socket.on("connect", () => console.log("✅ Socket connecté"));
-
-    socket.on("init", (data) => {
-      setCars(data.slice().reverse());
-      setLoading(false);
-    });
-
+    socket.on("init", (data) => { setCars(data.slice().reverse()); setLoading(false); });
     socket.on("new-car", (car) => {
       setCars((prev) => {
         if (prev.some((c) => c._id === car._id)) return prev;
@@ -56,21 +47,13 @@ export default function App() {
       setNewCarId(car._id);
       setTimeout(() => setNewCarId(null), 2000);
     });
-
     socket.on("update-car", (updatedCar) => {
-      setCars((prev) =>
-        prev.map((c) => (c._id === updatedCar._id ? updatedCar : c))
-      );
+      setCars((prev) => prev.map((c) => (c._id === updatedCar._id ? updatedCar : c)));
     });
-
     fetch(`${API_URL}/cars`)
       .then((res) => res.json())
-      .then((data) => {
-        setCars(data.slice().reverse());
-        setLoading(false);
-      })
+      .then((data) => { setCars(data.slice().reverse()); setLoading(false); })
       .catch((err) => console.log("Erreur fetch:", err));
-
     return () => socket.disconnect();
   }, []);
 
@@ -81,9 +64,7 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "Prêt" }),
       });
-    } catch (err) {
-      console.log("Erreur PUT:", err);
-    }
+    } catch (err) { console.log("Erreur PUT:", err); }
   };
 
   const getColor = (status) => {
@@ -93,25 +74,27 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6 lg:p-10">
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col">
 
-      <header className="mx-auto max-w-6xl px-6 py-8 mb-4 text-center">
-        <h1 className="text-4xl font-bold">
+      {/* HEADER COMPACT */}
+      <header className="px-4 py-2 flex items-center justify-between border-b border-slate-800">
+        <h1 className="text-xl font-bold">
           <span className="text-green-500">CLINICAR 77</span>
         </h1>
-        <p className="mt-3 text-gray-400">Dashboard temps réel des véhicules</p>
+        <span className="text-slate-400 text-xs">
+          {cars.length} véhicule{cars.length !== 1 ? "s" : ""} en cours
+        </span>
       </header>
 
       {loading && (
-        <p className="text-center text-gray-400 text-xl mt-10">
-          Chargement des véhicules...
-        </p>
+        <p className="text-center text-gray-400 text-sm mt-6">Chargement...</p>
       )}
 
-      <main className="mx-auto mt-6 max-w-6xl space-y-6">
+      {/* GRILLE 2 COLONNES — cartes petites, beaucoup tiennent à l'écran */}
+      <main className="flex-1 p-2 grid grid-cols-2 gap-2 content-start">
 
         {!loading && cars.length === 0 && (
-          <p className="text-center text-gray-400 text-xl">
+          <p className="col-span-2 text-center text-gray-400 text-sm mt-6">
             Aucun véhicule pour le moment...
           </p>
         )}
@@ -119,46 +102,46 @@ export default function App() {
         {cars.map((car) => (
           <div
             key={car._id}
-            className={`relative w-full rounded-2xl p-6 shadow-lg transition-all duration-300 hover:scale-[1.01]
+            className={`relative rounded-lg px-3 py-2 shadow transition-all duration-300
               ${getColor(car.status)}
-              ${newCarId === car._id ? "ring-4 ring-white scale-[1.02] brightness-125" : ""}
+              ${newCarId === car._id ? "ring-2 ring-white brightness-125" : ""}
             `}
           >
+            {/* BADGE NOUVEAU */}
             {newCarId === car._id && (
-              <span className="absolute top-3 right-4 bg-white text-orange-600 text-xs font-bold px-3 py-1 rounded-full animate-pulse">
-                🚗 NOUVEAU
+              <span className="absolute top-1.5 right-2 bg-white text-orange-600 text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                NEW
               </span>
             )}
 
-            <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div>
-                  <p className="text-xs uppercase opacity-70">Immatriculation</p>
-                  <p className="text-xl font-bold">{car.immatriculation}</p>
+            {/* LIGNE PRINCIPALE */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex gap-3 flex-1 min-w-0">
+                <div className="min-w-0">
+                  <p className="text-xs opacity-60 uppercase leading-none">Immat.</p>
+                  <p className="text-sm font-bold truncate">{car.immatriculation}</p>
                 </div>
-                <div>
-                  <p className="text-xs uppercase opacity-70">Modèle</p>
-                  <p className="text-xl font-bold">{car.modele}</p>
+                <div className="min-w-0">
+                  <p className="text-xs opacity-60 uppercase leading-none">Modèle</p>
+                  <p className="text-sm font-bold truncate">{car.modele}</p>
                 </div>
-                <div>
-                  <p className="text-xs uppercase opacity-70">Travail</p>
-                  <p className="text-xl font-bold">{car.besoin}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs opacity-60 uppercase leading-none">Travail</p>
+                  <p className="text-sm font-bold truncate">{car.besoin}</p>
                 </div>
               </div>
 
-              <div>
-                <button
-                  onClick={() => markReady(car._id)}
-                  className={`px-6 py-3 rounded-full font-bold transition hover:scale-105 ${
-                    car.status === "Prêt"
-                      ? "bg-white text-green-600"
-                      : "bg-white text-orange-600"
-                  }`}
-                >
-                  ✔ Prêt
-                </button>
-              </div>
+              <button
+                onClick={() => markReady(car._id)}
+                className={`shrink-0 px-2 py-1 rounded-full text-xs font-bold transition hover:scale-105 ${
+                  car.status === "Prêt" ? "bg-white text-green-600" : "bg-white text-orange-600"
+                }`}
+              >
+                ✔ Prêt
+              </button>
             </div>
+
+            <p className="text-xs opacity-60 mt-1">{car.status}</p>
           </div>
         ))}
       </main>
