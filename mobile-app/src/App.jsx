@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 // ✅ URL du backend Railway — change cette valeur quand tu as ton URL Railway
-const API_URL = import.meta.env.VITE_API_URL || "https://garage-live-system-1.onrender.com";
+const API_URL = import.meta.env.VITE_API_URL || "https://garage-live-system.onrender.com";
 
 export default function App() {
   const [form, setForm] = useState({
