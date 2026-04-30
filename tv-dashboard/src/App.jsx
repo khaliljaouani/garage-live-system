@@ -179,6 +179,72 @@ export default function App() {
           </div>
         ))}
       </div>
+
+      {/* GRILLE 2 COLONNES (VERSION 2) */}
+      <div
+        style={{
+          flex: 1,
+          padding: "16px",
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 420px)", // 2 colonnes de largeur fixe
+          gap: "16px",
+          justifyContent: "center", // centre la grille
+          alignItems: "stretch",     // force la même hauteur pour chaque ligne
+        }}
+      >
+        {cars.map((car) => (
+          <div
+            key={car._id}
+            style={{
+              position: "relative",
+              borderRadius: "10px",
+              padding: "16px",
+              background: car.status === "Prêt" ? "#22c55e" : "#fb923c",
+              boxShadow: newCarId === car._id ? "0 0 0 3px white" : "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+              width: "100%",           // largeur 100% de la colonne
+              height: "auto",          // hauteur automatique selon le contenu
+              minHeight: "60px",       // hauteur mini pour le look
+              fontSize: "16px",
+            }}
+          >
+            {/* ... contenu de la carte ... */}
+            <div style={{ display: "flex", gap: "20px", flex: 1, overflow: "hidden" }}>
+              <div>
+                <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Immat.</div>
+                <div style={{ fontSize: "15px", fontWeight: "bold" }}>{car.immatriculation}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Modèle</div>
+                <div style={{ fontSize: "15px", fontWeight: "bold" }}>{car.modele}</div>
+              </div>
+              <div style={{ flex: 1, overflow: "hidden" }}>
+                <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Travail</div>
+                <div style={{ fontSize: "15px", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{car.besoin}</div>
+              </div>
+            </div>
+            <button
+              onClick={() => markReady(car._id)}
+              style={{
+                background: "white",
+                color: car.status === "Prêt" ? "#16a34a" : "#ea580c",
+                border: "none",
+                borderRadius: "999px",
+                padding: "6px 14px",
+                fontWeight: "bold",
+                fontSize: "13px",
+                cursor: "pointer",
+                flexShrink: 0,
+              }}
+            >
+              ✔ Prêt
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
