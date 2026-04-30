@@ -1,13 +1,28 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://garage-live-system.onrender.com";
 
-// AudioContext global — créé uniquement après le clic utilisateur
+// AudioContext global
 let audioCtx = null;
 
+// Initialise l'audio au premier clic sur la page
+const initAudio = () => {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+  // Retire le listener après le premier clic — plus besoin
+  document.removeEventListener("click", initAudio);
+};
+
+// Écoute le premier clic n'importe où sur la page
+document.addEventListener("click", initAudio);
+
 const playGarageSound = () => {
-  if (!audioCtx) return;
+  if (!audioCtx || audioCtx.state !== "running") return;
 
   const playTone = (freq, startTime, duration, type, gain) => {
     const osc = audioCtx.createOscillator();
@@ -38,22 +53,7 @@ export default function App() {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newCarId, setNewCarId] = useState(null);
-  const [audioReady, setAudioReady] = useState(false);
 
-  // =========================
-  // ACTIVER SON AU CLIC
-  // =========================
-  const activateAudio = () => {
-    // Crée le contexte au moment exact du clic — navigateur l'autorise
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    setAudioReady(true);
-    // Son de test immédiat
-    playGarageSound();
-  };
-
-  // =========================
-  // SOCKET + FETCH
-  // =========================
   useEffect(() => {
     const socket = io(API_URL);
 
@@ -70,10 +70,8 @@ export default function App() {
         return [car, ...prev];
       });
 
-      // 🔊 Son mécanique
       playGarageSound();
 
-      // 💡 Flash visuel 2s
       setNewCarId(car._id);
       setTimeout(() => setNewCarId(null), 2000);
     });
@@ -95,9 +93,6 @@ export default function App() {
     return () => socket.disconnect();
   }, []);
 
-  // =========================
-  // MARQUER COMME PRÊT
-  // =========================
   const markReady = async (id) => {
     try {
       await fetch(`${API_URL}/cars/${id}`, {
@@ -110,9 +105,6 @@ export default function App() {
     }
   };
 
-  // =========================
-  // COULEURS
-  // =========================
   const getColor = (status) => {
     if (status === "Prêt") return "bg-green-500 text-white";
     if (status === "En cours" || status === "En attente") return "bg-orange-400 text-white";
@@ -123,35 +115,19 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 text-white p-6 lg:p-10">
 
       {/* HEADER */}
-      <header className="mx-auto max-w-6xl px-6 py-8 mb-4 flex items-center justify-between">
-        <div className="flex-1 text-center">
-          <h1 className="text-4xl font-bold">
-            <span className="text-green-500">CLINICAR 77</span>
-          </h1>
-          <p className="mt-3 text-gray-400">Dashboard temps réel des véhicules</p>
-        </div>
-
-        {/* BOUTON SON */}
-        <button
-          onClick={activateAudio}
-          className={`ml-6 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
-            audioReady
-              ? "bg-green-600 text-white"
-              : "bg-yellow-400 text-black animate-pulse hover:bg-yellow-300"
-          }`}
-        >
-          {audioReady ? "🔊 Son activé" : "🔇 Activer le son"}
-        </button>
+      <header className="mx-auto max-w-6xl px-6 py-8 mb-4 text-center">
+        <h1 className="text-4xl font-bold">
+          <span className="text-green-500">CLINICAR 77</span>
+        </h1>
+        <p className="mt-3 text-gray-400">Dashboard temps réel des véhicules</p>
       </header>
 
-      {/* LOADING */}
       {loading && (
         <p className="text-center text-gray-400 text-xl mt-10">
           Chargement des véhicules...
         </p>
       )}
 
-      {/* LISTE */}
       <main className="mx-auto mt-6 max-w-6xl space-y-6">
 
         {!loading && cars.length === 0 && (
@@ -168,7 +144,6 @@ export default function App() {
               ${newCarId === car._id ? "ring-4 ring-white scale-[1.02] brightness-125" : ""}
             `}
           >
-            {/* BADGE NOUVEAU */}
             {newCarId === car._id && (
               <span className="absolute top-3 right-4 bg-white text-orange-600 text-xs font-bold px-3 py-1 rounded-full animate-pulse">
                 🚗 NOUVEAU
@@ -176,7 +151,6 @@ export default function App() {
             )}
 
             <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
-
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <p className="text-xs uppercase opacity-70">Immatriculation</p>
@@ -204,7 +178,6 @@ export default function App() {
                   ✔ Prêt
                 </button>
               </div>
-
             </div>
           </div>
         ))}
