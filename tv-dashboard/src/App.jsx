@@ -205,7 +205,7 @@ export default function App() {
               alignItems: "center",
               justifyContent: "space-between",
               gap: "12px",
-              width: "100%",           // largeur 100% de la colonne
+              width: "100%",           // 
               height: "auto",          // hauteur automatique selon le contenu
               minHeight: "60px",       // hauteur mini pour le look
               fontSize: "16px",
