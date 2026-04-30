@@ -206,8 +206,8 @@ export default function App() {
               justifyContent: "space-between",
               gap: "12px",
               width: "100%",           // 
-              height: "auto",          // hauteur automatique selon le contenu
-              minHeight: "60px",       // hauteur mini pour le look
+              height: "auto",          // 
+              minHeight: "60px",       // 
               fontSize: "16px",
             }}
           >
