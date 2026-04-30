@@ -3,50 +3,36 @@ import { io } from "socket.io-client";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://garage-live-system.onrender.com";
 
-// AudioContext global
 let audioCtx = null;
 
-// Initialise l'audio au premier clic sur la page
 const initAudio = () => {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
-  // Retire le listener après le premier clic — plus besoin
+  if (audioCtx.state === "suspended") audioCtx.resume();
   document.removeEventListener("click", initAudio);
 };
 
-// Écoute le premier clic n'importe où sur la page
 document.addEventListener("click", initAudio);
 
-const playGarageSound = () => {
+// =========================
+// BIP SIMPLE
+// =========================
+const playBip = () => {
   if (!audioCtx || audioCtx.state !== "running") return;
 
-  const playTone = (freq, startTime, duration, type, gain) => {
-    const osc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    osc.connect(g);
-    g.connect(audioCtx.destination);
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startTime);
-    osc.frequency.exponentialRampToValueAtTime(
-      Math.max(freq * 0.4, 20),
-      audioCtx.currentTime + startTime + duration
-    );
-    g.gain.setValueAtTime(gain, audioCtx.currentTime + startTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startTime + duration);
-    osc.start(audioCtx.currentTime + startTime);
-    osc.stop(audioCtx.currentTime + startTime + duration + 0.01);
-  };
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
 
-  playTone(120, 0.00, 0.15, "sawtooth", 0.5);
-  playTone(80,  0.10, 0.20, "square",   0.4);
-  playTone(200, 0.20, 0.10, "sawtooth", 0.3);
-  playTone(60,  0.25, 0.30, "sawtooth", 0.25);
-  playTone(300, 0.30, 0.08, "square",   0.2);
-  playTone(150, 0.35, 0.20, "sawtooth", 0.15);
+  osc.type = "sine";
+  osc.frequency.value = 880; // fréquence du bip (880 Hz = bip net et clair)
+  gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+
+  osc.start(audioCtx.currentTime);
+  osc.stop(audioCtx.currentTime + 0.3);
 };
 
 export default function App() {
@@ -70,7 +56,7 @@ export default function App() {
         return [car, ...prev];
       });
 
-      playGarageSound();
+      playBip();
 
       setNewCarId(car._id);
       setTimeout(() => setNewCarId(null), 2000);
@@ -114,7 +100,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-white p-6 lg:p-10">
 
-      {/* HEADER */}
       <header className="mx-auto max-w-6xl px-6 py-8 mb-4 text-center">
         <h1 className="text-4xl font-bold">
           <span className="text-green-500">CLINICAR 77</span>
