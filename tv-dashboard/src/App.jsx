@@ -32,22 +32,20 @@ export default function App() {
 
   useEffect(() => {
     const socket = io(API_URL, {
-  transports: ["polling", "websocket"],
-});
+      transports: ["polling", "websocket"],
+    });
 
     socket.on("connect", () => console.log("✅ connecté"));
 
     socket.on("init", (data) => {
-      // ✅ FIXE : on stocke directement, pas de reverse ici
       setCars(data);
       setLoading(false);
     });
 
     socket.on("new-car", (car) => {
       setCars((prev) => {
-        // ✅ FIXE : toString() pour comparer les _id MongoDB
         if (prev.some((c) => c._id.toString() === car._id.toString())) return prev;
-        return [car, ...prev]; // nouvelle voiture en haut
+        return [car, ...prev];
       });
       playBip();
       setNewCarId(car._id.toString());
@@ -55,7 +53,6 @@ export default function App() {
     });
 
     socket.on("update-car", (updatedCar) => {
-      // ✅ FIXE : toString() pour que le statut se mette à jour sans refresh
       setCars((prev) =>
         prev.map((c) =>
           c._id.toString() === updatedCar._id.toString() ? updatedCar : c
@@ -82,9 +79,14 @@ export default function App() {
     });
   };
 
+  // Couleur selon le statut
+  const getCardColor = (status) => {
+    if (status === "Prêt") return "#22c55e";
+    return "#3b82f6";
+  };
+
   return (
     <div style={{ background: "#0f172a", minHeight: "100vh", color: "white", display: "flex", flexDirection: "column" }}>
-
       {/* HEADER */}
       <div style={{ padding: "8px 16px", borderBottom: "1px solid #1e293b", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ color: "#22c55e", fontWeight: "bold", fontSize: "18px" }}>CLINICAR 77</span>
@@ -92,62 +94,102 @@ export default function App() {
       </div>
 
       {/* GRILLE 2 COLONNES */}
-      <div style={{ flex: 1, padding: "8px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", alignContent: "start" }}>
-
+      <div style={{
+        flex: 1,
+        padding: "16px",
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "16px",
+        alignContent: "start"
+      }}>
         {loading && <p style={{ gridColumn: "span 2", textAlign: "center", color: "#94a3b8" }}>Chargement...</p>}
 
         {!loading && cars.length === 0 && (
           <p style={{ gridColumn: "span 2", textAlign: "center", color: "#94a3b8" }}>Aucun véhicule...</p>
         )}
 
-        {/* ✅ FIXE : plus de .reverse() ici */}
         {cars.map((car) => (
           <div key={car._id} style={{
             position: "relative",
-            borderRadius: "10px",
-            padding: "10px 14px",
-            background: car.status === "Prêt" ? "#22c55e" : "#fb923c",
+            borderRadius: "14px",
+            padding: "18px 24px",
+            background: getCardColor(car.status),
             boxShadow: newCarId === car._id.toString() ? "0 0 0 3px white" : "none",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: "8px"
+            gap: "16px",
+            width: "95%",
+            minWidth: "420px",
+            maxWidth: "700px",
+            margin: "0 auto"
           }}>
-
             {newCarId === car._id.toString() && (
-              <span style={{ position: "absolute", top: "6px", right: "6px", background: "white", color: "#ea580c", fontSize: "10px", fontWeight: "bold", padding: "2px 8px", borderRadius: "999px" }}>
+              <span style={{
+                position: "absolute",
+                top: "6px",
+                right: "6px",
+                background: "white",
+                color: "#ea580c",
+                fontSize: "10px",
+                fontWeight: "bold",
+                padding: "2px 8px",
+                borderRadius: "999px"
+              }}>
                 NEW
               </span>
             )}
 
-            <div style={{ display: "flex", gap: "20px", flex: 1, overflow: "hidden" }}>
+            <div style={{ display: "flex", gap: "32px", flex: 1, overflow: "hidden" }}>
               <div>
                 <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Immat.</div>
-                <div style={{ fontSize: "15px", fontWeight: "bold" }}>{car.immatriculation}</div>
+                <div style={{ fontSize: "18px", fontWeight: "bold" }}>{car.immatriculation}</div>
               </div>
               <div>
                 <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Modèle</div>
-                <div style={{ fontSize: "15px", fontWeight: "bold" }}>{car.modele}</div>
+                <div style={{ fontSize: "18px", fontWeight: "bold" }}>{car.modele}</div>
               </div>
               <div style={{ flex: 1, overflow: "hidden" }}>
                 <div style={{ fontSize: "10px", opacity: 0.7, textTransform: "uppercase" }}>Travail</div>
                 <div style={{
-                  fontSize: "15px",
+                  fontSize: "18px",
                   fontWeight: "bold",
                   whiteSpace: "normal",
                   wordBreak: "break-word",
                   overflow: "hidden",
                   textOverflow: "ellipsis"
                 }}>{car.besoin}</div>
-
-
-
               </div>
+            </div>
+
+            {/* Affichage du statut */}
+            <div style={{
+              marginLeft: 12,
+              fontWeight: "bold",
+              fontSize: "15px",
+              color: car.status === "Prêt" ? "#fff" : (car.status === "En cours" ? "#fff" : "#fff"),
+              background: car.status === "Prêt" ? "#16a34a" : "#2563eb",
+              borderRadius: 12,
+              padding: "6px 16px",
+              minWidth: 80,
+              textAlign: "center"
+            }}>
+              {car.status}
             </div>
 
             <button
               onClick={() => markReady(car._id)}
-              style={{ background: "white", color: car.status === "Prêt" ? "#16a34a" : "#ea580c", border: "none", borderRadius: "999px", padding: "6px 14px", fontWeight: "bold", fontSize: "13px", cursor: "pointer", flexShrink: 0 }}
+              style={{
+                background: "white",
+                color: car.status === "Prêt" ? "#16a34a" : "#ea580c",
+                border: "none",
+                borderRadius: "999px",
+                padding: "8px 18px",
+                fontWeight: "bold",
+                fontSize: "16px",
+                cursor: "pointer",
+                flexShrink: 0
+              }}
             >
               ✔ Prêt
             </button>

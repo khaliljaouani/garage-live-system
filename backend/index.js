@@ -21,7 +21,12 @@ app.use(express.json());
 // MONGODB CONNECTION
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connecté"))
+  .then(async () => {
+    console.log("✅ MongoDB connecté");
+    const result = await Car.updateMany({ status: "En attente" }, { status: "En cours" });
+    if (result.modifiedCount > 0)
+      console.log(`🔄 ${result.modifiedCount} voiture(s) "En attente" → "En cours"`);
+  })
   .catch((err) => console.error("❌ MongoDB erreur:", err));
 
 // MODEL
@@ -32,8 +37,8 @@ const CarSchema = new mongoose.Schema(
     besoin: String,
     status: {
       type: String,
-      enum: ["En attente", "En cours", "Prêt"],
-      default: "En attente",
+      enum: ["En cours", "Prêt"],
+      default: "En cours",
     },
   },
   { timestamps: true }
@@ -101,21 +106,24 @@ app.post("/cars", async (req, res) => {
   }
 });
 
-// UPDATE STATUS
+// UPDATE CAR (status + champs)
 app.put("/cars/:id", async (req, res) => {
   try {
-    const { status } = req.body;
-    if (!["En attente", "En cours", "Prêt"].includes(status)) {
-      return res.status(400).json({ error: "Statut invalide" });
+    const { status, modele, besoin } = req.body;
+    const update = {};
+
+    if (status !== undefined) {
+      if (!["En cours", "Prêt"].includes(status)) {
+        return res.status(400).json({ error: "Statut invalide" });
+      }
+      update.status = status;
     }
-    const car = await Car.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-    if (!car) {
-      return res.status(404).json({ error: "Voiture non trouvée" });
-    }
+    if (modele !== undefined) update.modele = modele;
+    if (besoin  !== undefined) update.besoin  = besoin;
+
+    const car = await Car.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!car) return res.status(404).json({ error: "Voiture non trouvée" });
+
     io.emit("update-car", car);
     res.json(car);
   } catch (err) {
