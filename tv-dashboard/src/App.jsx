@@ -154,9 +154,12 @@ export default function App() {
                 <div style={{
                   fontSize: "18px",
                   fontWeight: "bold",
-                  whiteSpace: "nowrap",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
                   overflow: "hidden",
-                  textOverflow: "ellipsis"
+                  whiteSpace: "normal",
+                  wordBreak: "break-word"
                 }}>{car.besoin}</div>
               </div>
             </div>
