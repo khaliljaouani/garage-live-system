@@ -32,8 +32,8 @@ const CarSchema = new mongoose.Schema(
     besoin: String,
     status: {
       type: String,
-      enum: ["En attente", "En cours", "Prêt"],
-      default: "En attente",
+      enum: ["En cours", "Prêt"],
+      default: "En cours",
     },
   },
   { timestamps: true }
@@ -108,7 +108,7 @@ app.put("/cars/:id", async (req, res) => {
     const update = {};
 
     if (status !== undefined) {
-      if (!["En attente", "En cours", "Prêt"].includes(status)) {
+      if (!["En cours", "Prêt"].includes(status)) {
         return res.status(400).json({ error: "Statut invalide" });
       }
       update.status = status;

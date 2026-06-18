@@ -4,13 +4,12 @@ import { io } from "socket.io-client";
 const API_URL = import.meta.env.VITE_API_URL || "https://garage-live-system.onrender.com";
 
 const STATUS_STYLE = {
-  "Prêt":       { card: "bg-green-500",  badge: "bg-green-700 text-white"  },
-  "En cours":   { card: "bg-blue-500",   badge: "bg-blue-700 text-white"   },
-  "En attente": { card: "bg-orange-400", badge: "bg-orange-600 text-white" },
+  "Prêt":     { card: "bg-green-500",  badge: "bg-green-700 text-white" },
+  "En cours": { card: "bg-orange-400", badge: "bg-orange-600 text-white" },
 };
-const defaultStyle = STATUS_STYLE["En attente"];
+const defaultStyle = STATUS_STYLE["En cours"];
 
-const FILTERS = ["Tous", "En attente", "En cours", "Prêt"];
+const FILTERS = ["Tous", "En cours", "Prêt"];
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -121,7 +120,7 @@ function CarsList({ onEdit }) {
                   <span className="text-white/70 text-sm font-medium">· {car.modele}</span>
                 </div>
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${style.badge}`}>
-                  {car.status || "En attente"}
+                  {car.status || "En cours"}
                 </span>
               </div>
 
