@@ -154,8 +154,7 @@ export default function App() {
                 <div style={{
                   fontSize: "18px",
                   fontWeight: "bold",
-                  whiteSpace: "normal",
-                  wordBreak: "break-word",
+                  whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis"
                 }}>{car.besoin}</div>
@@ -168,7 +167,7 @@ export default function App() {
               fontWeight: "bold",
               fontSize: "15px",
               color: car.status === "Prêt" ? "#fff" : (car.status === "En cours" ? "#fff" : "#fff"),
-              background: car.status === "Prêt" ? "#16a34a" : "#ea580c",
+              background: car.status === "Prêt" ? "#16a34a" : "#c2410c",
               borderRadius: 12,
               padding: "6px 16px",
               minWidth: 80,
