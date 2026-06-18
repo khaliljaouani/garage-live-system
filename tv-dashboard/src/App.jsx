@@ -82,7 +82,8 @@ export default function App() {
   // Couleur selon le statut
   const getCardColor = (status) => {
     if (status === "Prêt") return "#22c55e";
-    return "#3b82f6";
+    if (status === "En cours") return "#3b82f6";
+    return "#fb923c";
   };
 
   return (
@@ -168,7 +169,7 @@ export default function App() {
               fontWeight: "bold",
               fontSize: "15px",
               color: car.status === "Prêt" ? "#fff" : (car.status === "En cours" ? "#fff" : "#fff"),
-              background: car.status === "Prêt" ? "#16a34a" : "#2563eb",
+              background: car.status === "Prêt" ? "#16a34a" : (car.status === "En cours" ? "#2563eb" : "#ea580c"),
               borderRadius: 12,
               padding: "6px 16px",
               minWidth: 80,
