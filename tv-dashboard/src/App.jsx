@@ -154,10 +154,6 @@ export default function App() {
                 <div style={{
                   fontSize: "18px",
                   fontWeight: "bold",
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
                   whiteSpace: "normal",
                   wordBreak: "break-word"
                 }}>{car.besoin}</div>
