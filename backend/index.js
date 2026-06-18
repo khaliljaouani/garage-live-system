@@ -21,12 +21,7 @@ app.use(express.json());
 // MONGODB CONNECTION
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(async () => {
-    console.log("✅ MongoDB connecté");
-    const result = await Car.updateMany({ status: "En attente" }, { status: "En cours" });
-    if (result.modifiedCount > 0)
-      console.log(`🔄 ${result.modifiedCount} voiture(s) "En attente" → "En cours"`);
-  })
+  .then(() => console.log("✅ MongoDB connecté"))
   .catch((err) => console.error("❌ MongoDB erreur:", err));
 
 // MODEL
@@ -37,8 +32,8 @@ const CarSchema = new mongoose.Schema(
     besoin: String,
     status: {
       type: String,
-      enum: ["En cours", "Prêt"],
-      default: "En cours",
+      enum: ["En attente", "En cours", "Prêt"],
+      default: "En attente",
     },
   },
   { timestamps: true }
@@ -113,7 +108,7 @@ app.put("/cars/:id", async (req, res) => {
     const update = {};
 
     if (status !== undefined) {
-      if (!["En cours", "Prêt"].includes(status)) {
+      if (!["En attente", "En cours", "Prêt"].includes(status)) {
         return res.status(400).json({ error: "Statut invalide" });
       }
       update.status = status;
