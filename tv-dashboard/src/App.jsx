@@ -71,11 +71,12 @@ export default function App() {
     return () => socket.disconnect();
   }, []);
 
-  const markReady = async (id) => {
-    await fetch(`${API_URL}/cars/${id}`, {
+  const toggleStatus = async (car) => {
+    const newStatus = car.status === "Prêt" ? "En cours" : "Prêt";
+    await fetch(`${API_URL}/cars/${car._id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "Prêt" })
+      body: JSON.stringify({ status: newStatus })
     });
   };
 
@@ -148,34 +149,22 @@ export default function App() {
                   <div style={{ fontSize: "18px", fontWeight: "bold" }}>{car.modele}</div>
                 </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                <div style={{
+              <button
+                onClick={() => toggleStatus(car)}
+                style={{
+                  background: car.status === "Prêt" ? "#16a34a" : "white",
+                  color: car.status === "Prêt" ? "white" : "#ea580c",
+                  border: "none",
+                  borderRadius: "999px",
+                  padding: "8px 20px",
                   fontWeight: "bold",
-                  fontSize: "14px",
-                  color: "#fff",
-                  background: car.status === "Prêt" ? "#16a34a" : "#c2410c",
-                  borderRadius: 10,
-                  padding: "5px 14px",
-                  textAlign: "center"
-                }}>
-                  {car.status}
-                </div>
-                <button
-                  onClick={() => markReady(car._id)}
-                  style={{
-                    background: "white",
-                    color: car.status === "Prêt" ? "#16a34a" : "#ea580c",
-                    border: "none",
-                    borderRadius: "999px",
-                    padding: "7px 16px",
-                    fontWeight: "bold",
-                    fontSize: "15px",
-                    cursor: "pointer"
-                  }}
-                >
-                  ✔ Prêt
-                </button>
-              </div>
+                  fontSize: "15px",
+                  cursor: "pointer",
+                  flexShrink: 0
+                }}
+              >
+                {car.status === "Prêt" ? "✔ Prêt" : "En cours"}
+              </button>
             </div>
 
             {/* Ligne 2 : Travail pleine largeur */}
