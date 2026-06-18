@@ -29,6 +29,32 @@ export default function App() {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newCarId, setNewCarId] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const prevDay = () => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() - 1);
+    setSelectedDate(d);
+  };
+
+  const nextDay = () => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + 1);
+    setSelectedDate(d);
+  };
+
+  const isToday = selectedDate.toDateString() === new Date().toDateString();
+
+  const visibleCars = cars.filter(car => {
+    const carDate = new Date(car.createdAt);
+    return carDate.toDateString() === selectedDate.toDateString();
+  });
 
   useEffect(() => {
     const socket = io(API_URL, {
@@ -89,9 +115,34 @@ export default function App() {
   return (
     <div style={{ background: "#0f172a", minHeight: "100vh", color: "white", display: "flex", flexDirection: "column" }}>
       {/* HEADER */}
-      <div style={{ padding: "8px 16px", borderBottom: "1px solid #1e293b", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ padding: "10px 20px", borderBottom: "1px solid #1e293b", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+
+        {/* Logo */}
         <span style={{ color: "#22c55e", fontWeight: "bold", fontSize: "18px" }}>CLINICAR 77</span>
-        <span style={{ color: "#94a3b8", fontSize: "12px" }}>{cars.length} véhicule{cars.length !== 1 ? "s" : ""}</span>
+
+        {/* Navigation jour */}
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <button onClick={prevDay} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: "22px", cursor: "pointer", lineHeight: 1 }}>‹</button>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ color: "white", fontWeight: "bold", fontSize: "15px" }}>
+              {isToday ? "Aujourd'hui" : selectedDate.toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long" })}
+            </div>
+            <div style={{ color: "#94a3b8", fontSize: "11px" }}>
+              {selectedDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })} — {visibleCars.length} véhicule{visibleCars.length !== 1 ? "s" : ""}
+            </div>
+          </div>
+          <button onClick={nextDay} disabled={isToday} style={{ background: "none", border: "none", color: isToday ? "#334155" : "#94a3b8", fontSize: "22px", cursor: isToday ? "default" : "pointer", lineHeight: 1 }}>›</button>
+        </div>
+
+        {/* Horloge */}
+        <div style={{ textAlign: "right" }}>
+          <div style={{ color: "white", fontWeight: "bold", fontSize: "20px", fontVariantNumeric: "tabular-nums" }}>
+            {now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+          </div>
+          <div style={{ color: "#94a3b8", fontSize: "11px" }}>
+            {now.toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+          </div>
+        </div>
       </div>
 
       {/* GRILLE 2 COLONNES */}
@@ -105,11 +156,11 @@ export default function App() {
       }}>
         {loading && <p style={{ gridColumn: "span 2", textAlign: "center", color: "#94a3b8" }}>Chargement...</p>}
 
-        {!loading && cars.length === 0 && (
-          <p style={{ gridColumn: "span 2", textAlign: "center", color: "#94a3b8" }}>Aucun véhicule...</p>
+        {!loading && visibleCars.length === 0 && (
+          <p style={{ gridColumn: "span 2", textAlign: "center", color: "#94a3b8" }}>Aucun véhicule ce jour.</p>
         )}
 
-        {cars.map((car) => (
+        {visibleCars.map((car) => (
           <div key={car._id} style={{
             position: "relative",
             borderRadius: "14px",
